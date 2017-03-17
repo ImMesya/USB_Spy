@@ -86,10 +86,10 @@ class Window(QWidget):
                     self.ipAddress = ipAddress
                     break
             else:
+                self.ipAddress = self.ipAddress.toString()
                 self.ipAddress = QHostAddress(QHostAddress.LocalHost)
 
         self.server.listen(QHostAddress(self.ipAddress), self.PORT) # listen TCP port
-        self.ipAddress = self.ipAddress.toString()
 
         self.statusLabel = QLabel(self.language['StatusLabel'].format(self.ipAddress, self.PORT))
         log.info('Server started on IP:{0} port:{1}'.format(self.ipAddress, self.PORT))
