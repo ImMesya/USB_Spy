@@ -246,8 +246,6 @@ class Window(QWidget):
             self.usersTable.setItem(*next(gen), QTableWidgetItem(key))
             self.usersTable.setItem(*next(gen), QTableWidgetItem(value))
 
-        #self.user
-
     def createSettingsGroupBox(self): # creation Settings Group Box
         self.SettingsGroupBox = QGroupBox(self.language['SettingsGroup'])
 
