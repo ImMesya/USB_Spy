@@ -1,16 +1,18 @@
-from PyQt5.QtWidgets import (QWidget,QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QTextEdit, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QAbstractItemView)
+from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QTextEdit, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QAbstractItemView, QCheckBox, QTreeWidget, QTreeWidgetItem, QMainWindow)
 from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket, QNetworkInterface)
 from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice)
 from PyQt5.QtGui import QIcon
 from os import system, path
 import logging as log
 from lang_dict import russian, english
+
 """
 USB_SPY - Server
 Application receive information from USB_SPY - client about plugged in/out USB flash drives
 """
+
 __author__ = 'Ruslan Messian Ovcharenko'
-__version__ = '1.0'
+__version__ = '1.1'
 
 def loadConfig():
     if path.exists('config.txt'):
@@ -20,7 +22,7 @@ def loadConfig():
             file_py.write(txtFile)
     else:
         with open('config.txt', 'w') as file_txt:
-            file_txt.write("LANG='english'\nIPADDRESS=\'None\'\nPORT=5454\nDURATION=5\nSTATUS=False")
+            file_txt.write("LANG='english'\nIPADDRESS=\'None\'\nPORT=5454\nDURATION=5\nNTSTATE=True")
         with open('config.txt', 'r') as file_txt:
             txtFile = file_txt.read()
         with open('config.py', 'w') as file_py:
@@ -64,7 +66,7 @@ class Window(QWidget):
             self.confIP = config.IPADDRESS
             self.PORT = config.PORT
             self.duration = config.DURATION
-            self.STATUS = config.STATUS
+            self.ntState = config.NTSTATE
             system('del config.py')
         except:
             log.warning('Can\'t load configuration from "config.txt"')
@@ -86,8 +88,8 @@ class Window(QWidget):
                     self.ipAddress = ipAddress
                     break
             else:
-                self.ipAddress = self.ipAddress.toString()
                 self.ipAddress = QHostAddress(QHostAddress.LocalHost)
+            self.ipAddress = self.ipAddress.toString()
 
         self.server.listen(QHostAddress(self.ipAddress), self.PORT) # listen TCP port
 
@@ -120,7 +122,8 @@ class Window(QWidget):
                     self.updateTable()
                 except:
                     pass
-            self.showMessage(message, status)
+            if self.ntState == False:
+                self.showMessage(message, status)
         except UnicodeDecodeError as error:
             log.warning(error)
             return
@@ -198,6 +201,7 @@ class Window(QWidget):
         self.durationLabel.setToolTip(self.language['Duration2'])
         self.languageLabel.setText(self.language['Language'])
         self.statusLabel.setText(self.language['StatusLabel'].format(self.ipAddress, self.PORT))
+        self.notifiLable.setText(self.language['Notification'])
 
         self.durationSpinBox.setSuffix(self.language['DurationSuffix'])
 
@@ -208,7 +212,7 @@ class Window(QWidget):
     def activeSave(self): # enable save button only when spinbox and language was changed
         self.saveButton.setEnabled(True)
 
-        if (self.durationSpinBox.text().replace(self.language['DurationSuffix'], '') == str(self.duration)) and (self.currentLanguage == self.confLANG):
+        if (self.durationSpinBox.text().replace(self.language['DurationSuffix'], '') == str(self.duration)) and (self.currentLanguage == self.confLANG) and self.ntState == self.disableNotifi.isChecked():
             self.saveButton.setEnabled(False)
 
     def onSave(self): # save new parameters to configuration file
@@ -216,11 +220,12 @@ class Window(QWidget):
             text = read_config.read()
 
         with open('config.txt', 'w') as replace_config:
-            replace_config.write(text.replace("LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nSTATUS=False".format(self.confLANG, self.confIP, self.PORT, self.duration), "LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nSTATUS=False".format(self.currentLanguage, self.ipAddress, self.PORT,  self.durationSpinBox.text().replace(self.language['DurationSuffix'], ''))))
+            replace_config.write(text.replace("LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nNTSTATE={4}".format(self.confLANG, self.confIP, self.PORT, self.duration, self.ntState), "LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nNTSTATE={4}".format(self.currentLanguage, self.ipAddress, self.PORT,  self.durationSpinBox.text().replace(self.language['DurationSuffix'], ''), self.disableNotifi.isChecked())))
 
         self.duration = self.durationSpinBox.text().replace(self.language['DurationSuffix'], '')
         self.confIP = self.ipAddress
         self.confLANG = self.currentLanguage
+        self.ntState = self.disableNotifi.isChecked()
 
         self.saveButton.setEnabled(False)
         log.info('Configuration was changed')
@@ -241,6 +246,8 @@ class Window(QWidget):
             self.usersTable.setItem(*next(gen), QTableWidgetItem(key))
             self.usersTable.setItem(*next(gen), QTableWidgetItem(value))
 
+        #self.user
+
     def createSettingsGroupBox(self): # creation Settings Group Box
         self.SettingsGroupBox = QGroupBox(self.language['SettingsGroup'])
 
@@ -253,6 +260,11 @@ class Window(QWidget):
         self.durationSpinBox.setValue(self.duration)
         self.durationSpinBox.valueChanged.connect(self.activeSave)
         self.durationLabel.setBuddy(self.durationSpinBox)
+
+        self.disableNotifi = QCheckBox()
+        self.disableNotifi.setChecked(self.ntState)
+        self.disableNotifi.stateChanged.connect(self.activeSave)
+        self.notifiLable = QLabel(self.language['Notification'])
 
         self.languageLabel = QLabel(self.language['Language'])
         self.languageList = QComboBox()
@@ -267,8 +279,10 @@ class Window(QWidget):
         self.settingsLayout = QGridLayout()
         self.settingsLayout.addWidget(self.languageLabel, 0, 0)
         self.settingsLayout.addWidget(self.languageList, 0, 1)
-        self.settingsLayout.addWidget(self.durationLabel, 1, 0)
-        self.settingsLayout.addWidget(self.durationSpinBox, 1, 1)
+        self.settingsLayout.addWidget(self.notifiLable, 1, 0)
+        self.settingsLayout.addWidget(self.disableNotifi, 1, 1)
+        self.settingsLayout.addWidget(self.durationLabel, 2, 0)
+        self.settingsLayout.addWidget(self.durationSpinBox, 2, 1)
 
         self.SettingsGroupBox.setLayout(self.settingsLayout)
 
@@ -290,6 +304,7 @@ class Window(QWidget):
         self.usersTable.setColumnWidth(0, 170)
         self.usersTable.setColumnWidth(1, 170)
         self.usersTable.setSortingEnabled(True)
+        self.usersTable.doubleClicked.connect(self.openTree)
         self.usersTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         UsersVLayout = QVBoxLayout()
@@ -321,6 +336,16 @@ class Window(QWidget):
          self.trayIcon = QSystemTrayIcon(self)
          self.trayIcon.setContextMenu(self.trayIconMenu)
          self.trayIcon.setIcon(QIcon('icon.ico'))
+
+    def openTree(self):
+        self.TUSB = TreeUSB()
+        self.TUSB.show()
+
+class TreeUSB(QMainWindow):
+    def __init__(self):
+        super(TreeUSB, self).__init__()
+
+        pass
 
 if __name__ == '__main__':
     loadConfig()
