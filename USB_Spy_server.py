@@ -4,7 +4,7 @@ from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice, QAbstract
 from PyQt5.QtGui import QIcon
 from os import system, path, walk
 import logging as log
-from lang_dict import russian, english
+from lang_dict import russian, english, ukraine
 
 """
 USB_SPY - Server
@@ -75,8 +75,11 @@ class Window(QWidget):
                     elif self.LANG == 'english':
                         self.language = english
                         self.confLANG = 'english'
+                    elif self.LANG == 'ukraine':
+                        self.language = ukraine
+                        self.confLANG = 'ukraine'
                     self.confIP = xmlReader.attributes().value("IPADDRESS")
-                    self.ipAddress = self.confIP.replace("'", '')
+                    self.ipAddress = self.confIP.replace('"', '')
                     self.PORT = int(xmlReader.attributes().value("PORT"))
                     self.duration = int(xmlReader.attributes().value("DURATION"))
                     self.ntState = int(xmlReader.attributes().value("NTSTATE"))
@@ -193,6 +196,9 @@ class Window(QWidget):
         elif self.languageList.currentText() == 'Русский':
             self.currentLanguage = 'russian'
             self.language = russian
+        elif self.languageList.currentText() == 'Українська':
+            self.currentLanguage = 'ukraine'
+            self.language = ukraine
         self.updateLanguageText()
         self.activeSave()
 
@@ -280,11 +286,13 @@ class Window(QWidget):
 
         self.languageLabel = QLabel(self.language['Language'])
         self.languageList = QComboBox()
-        self.languageList.addItems(['English', 'Русский'])
+        self.languageList.addItems(['English', 'Русский', 'Українська'])
         if self.language == russian:
             self.languageList.setCurrentIndex(1)
         elif self.language == english:
             self.languageList.setCurrentIndex(0)
+        elif self.language == ukraine:
+            self.languageList.setCurrentIndex(2)
         self.languageList.currentTextChanged.connect(self.updateLanguage)
         self.languageLabel.setBuddy(self.languageList)
 
