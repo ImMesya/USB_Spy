@@ -20,13 +20,20 @@ class Window(QWidget):
         log.info('Starting application')
         self.configuration()
 
-        self.createSettingsGroupBox()
-        self.createUsersGroupBox()
-        self.createActions()
-        self.createTrayIcon()
-        self.sessionOpened()
-        self.sessionBroadcast()
-        self.updateLanguage()
+        try:
+            self.createSettingsGroupBox()
+            self.createUsersGroupBox()
+            self.createActions()
+            self.createTrayIcon()
+            self.sessionBroadcast()
+            self.sessionOpened()
+            self.updateLanguage()
+        except:
+            log.warning('Can\'t load configuration from "config.xml"')
+            system('del config.xml')
+            QMessageBox.critical(self, self.language['errAtStartName'], self.language['ErrAtStart'], QMessageBox.Ok)
+            self.quitLog()
+            sys.exit(app.exec_())
 
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(self.statusGroupBox)
@@ -58,36 +65,28 @@ class Window(QWidget):
             xmlWriter.writeEndDocument()
             self.xmlConfig.close()
 
-        self.readConf()
-
-    def readConf(self):
         self.language = english #default language if can't load from file
-        try:
-            self.xmlConfig.open(QIODevice.ReadOnly)
-            xmlReader = QXmlStreamReader(self.xmlConfig)
-            while not xmlReader.atEnd():
-                xmlReader.readNext()
-                if xmlReader.isStartElement():
-                    self.LANG = xmlReader.attributes().value("LANG")
-                    if self.LANG == 'russian':
+        self.xmlConfig.open(QIODevice.ReadOnly)
+        xmlReader = QXmlStreamReader(self.xmlConfig)
+        while not xmlReader.atEnd():
+            xmlReader.readNext()
+            if xmlReader.isStartElement():
+                self.LANG = xmlReader.attributes().value("LANG")
+                if self.LANG == 'russian':
                         self.confLANG = 'russian'
                         self.language = russian
-                    elif self.LANG == 'english':
+                elif self.LANG == 'english':
                         self.language = english
                         self.confLANG = 'english'
-                    elif self.LANG == 'ukraine':
-                        self.language = ukraine
-                        self.confLANG = 'ukraine'
-                    self.confIP = xmlReader.attributes().value("IPADDRESS")
-                    self.ipAddress = self.confIP.replace('"', '')
-                    self.PORT = int(xmlReader.attributes().value("PORT"))
-                    self.duration = int(xmlReader.attributes().value("DURATION"))
-                    self.ntState = int(xmlReader.attributes().value("NTSTATE"))
-        except:
-            log.warning('Can\'t load configuration from "config.xml"')
-            QMessageBox.critical(self, self.language['errAtStartName'], self.language['ErrAtStart'], QMessageBox.Ok)
-            self.quitLog()
-            sys.exit(app.exec_())
+                elif self.LANG == 'ukraine':
+                    self.language = ukraine
+                    self.confLANG = 'ukraine'
+                self.confIP = xmlReader.attributes().value("IPADDRESS")
+                self.ipAddress = self.confIP.replace('"', '')
+                self.PORT = int(xmlReader.attributes().value("PORT"))
+                self.duration = int(xmlReader.attributes().value("DURATION"))
+                self.ntState = int(xmlReader.attributes().value("NTSTATE"))
+        self.xmlConfig.close()
 
     def sessionOpened(self): # opening ports for TCP session
         self.statusGroupBox = QGroupBox(self.language['StatusGroup'])
