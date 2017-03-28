@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QTextEdit, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QAbstractItemView, QCheckBox, QTreeWidget, QTreeWidgetItem, QMainWindow)
+from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QTextEdit, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QAbstractItemView, QCheckBox, QTreeWidget, QTreeWidgetItem, QMainWindow, QFileSystemModel, QTreeView)
 from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket, QNetworkInterface)
-from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice)
+from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice, QAbstractItemModel, QModelIndex, QXmlStreamWriter, QXmlStreamReader, QFile)
 from PyQt5.QtGui import QIcon
-from os import system, path
+from os import system, path, walk
 import logging as log
 from lang_dict import russian, english
 
@@ -12,21 +12,7 @@ Application receive information from USB_SPY - client about plugged in/out USB f
 """
 
 __author__ = 'Ruslan Messian Ovcharenko'
-__version__ = '1.1'
-
-def loadConfig():
-    if path.exists('config.txt'):
-        with open('config.txt', 'r') as file_txt:
-            txtFile = file_txt.read()
-        with open('config.py', 'w') as file_py:
-            file_py.write(txtFile)
-    else:
-        with open('config.txt', 'w') as file_txt:
-            file_txt.write("LANG='english'\nIPADDRESS=\'None\'\nPORT=5454\nDURATION=5\nNTSTATE=True")
-        with open('config.txt', 'r') as file_txt:
-            txtFile = file_txt.read()
-        with open('config.py', 'w') as file_py:
-            file_py.write(txtFile)
+__version__ = '1.2'
 
 class Window(QWidget):
     def __init__(self):
@@ -54,23 +40,48 @@ class Window(QWidget):
         self.setLayout(mainLayout)
 
     def configuration(self):
+        self.xmlConfig = QFile("config.xml")
+        if not path.exists("config.xml"):
+            xmlWriter = QXmlStreamWriter()
+            xmlWriter.setAutoFormatting(True)
+            self.xmlConfig.open(QIODevice.WriteOnly)
+            xmlWriter.setDevice(self.xmlConfig)
+            xmlWriter.writeStartDocument()
+            xmlWriter.writeComment("Do not change this parameters!")
+            xmlWriter.writeStartElement("Variables")
+            xmlWriter.writeAttribute("LANG", "english")
+            xmlWriter.writeAttribute("IPADDRESS", "None")
+            xmlWriter.writeAttribute("PORT", "5454")
+            xmlWriter.writeAttribute("DURATION", "5")
+            xmlWriter.writeAttribute("NTSTATE", "0")
+            xmlWriter.writeEndElement()
+            xmlWriter.writeEndDocument()
+            self.xmlConfig.close()
+
+        self.readConf()
+
+    def readConf(self):
         self.language = english #default language if can't load from file
-        try: # get information from configuration file
-            if config.LANG == 'russian':
-                self.confLANG = 'russian'
-                self.language = russian
-            elif config.LANG == 'english':
-                self.language = english
-                self.confLANG = 'english'
-            self.ipAddress = config.IPADDRESS.replace("'", '')
-            self.confIP = config.IPADDRESS
-            self.PORT = config.PORT
-            self.duration = config.DURATION
-            self.ntState = config.NTSTATE
-            system('del config.py')
+        try:
+            self.xmlConfig.open(QIODevice.ReadOnly)
+            xmlReader = QXmlStreamReader(self.xmlConfig)
+            while not xmlReader.atEnd():
+                xmlReader.readNext()
+                if xmlReader.isStartElement():
+                    self.LANG = xmlReader.attributes().value("LANG")
+                    if self.LANG == 'russian':
+                        self.confLANG = 'russian'
+                        self.language = russian
+                    elif self.LANG == 'english':
+                        self.language = english
+                        self.confLANG = 'english'
+                    self.confIP = xmlReader.attributes().value("IPADDRESS")
+                    self.ipAddress = self.confIP.replace("'", '')
+                    self.PORT = int(xmlReader.attributes().value("PORT"))
+                    self.duration = int(xmlReader.attributes().value("DURATION"))
+                    self.ntState = int(xmlReader.attributes().value("NTSTATE"))
         except:
-            log.warning('Can\'t load configuration from "config.txt"')
-            system('del config.txt && del config.py')
+            log.warning('Can\'t load configuration from "config.xml"')
             QMessageBox.critical(self, self.language['errAtStartName'], self.language['ErrAtStart'], QMessageBox.Ok)
             self.quitLog()
             sys.exit(app.exec_())
@@ -109,19 +120,18 @@ class Window(QWidget):
         message = client.read(client.bytesAvailable())
         try:
             message = message.decode("utf-8").split('||')
-            if message[2] == 'connect':
-                log.warning('%s (%s) plug in %s with S/N: %s'%(message[0], message[1], message[3], message[4]))
+            if message[0] == 'connect':
+                log.warning('%s (%s) plugged in %s with S/N: %s'%(message[1], message[2], message[3], message[4]))
                 status = 'in'
-                self.usersList[message[0]] = message[1]
+                self.usersList[message[1]] = message[2]
                 self.updateTable()
-            else:
-                log.info('%s (%s) plug out %s with S/N: %s'%(message[0], message[1], message[3], message[4]))
+            elif message[0] == 'disconnect':
+                log.info('%s (%s) plugged out %s with S/N: %s'%(message[1], message[2], message[3], message[4]))
                 status = 'out'
-                try:
-                    self.usersList.pop(message[0])
-                    self.updateTable()
-                except:
-                    pass
+                self.usersList.pop(message[1])
+                self.updateTable()
+            elif message[0] == 'data':
+                self.usersData(message[1])
             if self.ntState == False:
                 self.showMessage(message, status)
         except UnicodeDecodeError as error:
@@ -216,11 +226,15 @@ class Window(QWidget):
             self.saveButton.setEnabled(False)
 
     def onSave(self): # save new parameters to configuration file
-        with open('config.txt', 'r') as read_config:
+        with open('config.xml', 'r') as read_config:
             text = read_config.read()
 
-        with open('config.txt', 'w') as replace_config:
-            replace_config.write(text.replace("LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nNTSTATE={4}".format(self.confLANG, self.confIP, self.PORT, self.duration, self.ntState), "LANG='{0}'\nIPADDRESS='{1}'\nPORT={2}\nDURATION={3}\nNTSTATE={4}".format(self.currentLanguage, self.ipAddress, self.PORT,  self.durationSpinBox.text().replace(self.language['DurationSuffix'], ''), self.disableNotifi.isChecked())))
+        if self.disableNotifi.isChecked() == True:
+            ntState = 1
+        else: ntState = 0
+
+        with open('config.xml', 'w') as replace_config:
+            replace_config.write(text.replace('LANG="{0}" IPADDRESS="{1}" PORT="{2}" DURATION="{3}" NTSTATE="{4}"'.format(self.confLANG, self.confIP, self.PORT, self.duration, self.ntState), 'LANG="{0}" IPADDRESS="{1}" PORT="{2}" DURATION="{3}" NTSTATE="{4}"'.format(self.currentLanguage, self.ipAddress, self.PORT, self.durationSpinBox.text().replace(self.language['DurationSuffix'], ''), ntState)))
 
         self.duration = self.durationSpinBox.text().replace(self.language['DurationSuffix'], '')
         self.confIP = self.ipAddress
@@ -302,7 +316,6 @@ class Window(QWidget):
         self.usersTable.setColumnWidth(0, 170)
         self.usersTable.setColumnWidth(1, 170)
         self.usersTable.setSortingEnabled(True)
-        self.usersTable.doubleClicked.connect(self.openTree)
         self.usersTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         UsersVLayout = QVBoxLayout()
@@ -335,19 +348,8 @@ class Window(QWidget):
          self.trayIcon.setContextMenu(self.trayIconMenu)
          self.trayIcon.setIcon(QIcon('icon.ico'))
 
-    def openTree(self):
-        self.TUSB = TreeUSB()
-        self.TUSB.show()
-
-class TreeUSB(QMainWindow):
-    def __init__(self):
-        super(TreeUSB, self).__init__()
-
-        pass
-
 if __name__ == '__main__':
-    loadConfig()
-    import sys, config
+    import sys
     app = QApplication(sys.argv)
     QApplication.setQuitOnLastWindowClosed(False)
     log.basicConfig(filename='usbspy.log', level=log.DEBUG, format='%(asctime)s | %(levelname)s | %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
