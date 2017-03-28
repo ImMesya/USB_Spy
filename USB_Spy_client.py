@@ -1,6 +1,7 @@
 import win32com.client
 import time
 import socket
+import PyQt5.QtNetwork
 """
 Client for USB_SPY
 PORT_UDP for echo client send self ip address to USB_SPY and
@@ -91,7 +92,7 @@ def client(message):
     s=socket.socket()
     name=socket.gethostname()
     s.connect((IP_ADDRESS_SERVER_USB,int(PORT_SERVER_USB)))
-    message=("{}||{}||{}||{}||{}||".format(name,s.getsockname()[0], message[1], (message[0][1][0]+message[0][1][1]), message[0][0]))
+    message=("{}||{}||{}||{}||{}||".format(message[1], name,s.getsockname()[0], (message[0][1][1]+" ("+message[0][1][0]+")"), message[0][0]))
     s.sendall(message.encode("utf-8"))
     s.close()
 
