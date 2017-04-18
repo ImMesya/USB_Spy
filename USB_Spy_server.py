@@ -1,20 +1,22 @@
 #!/usr/bin/python3
+# coding=utf-8
 
-from PyQt5.QtWidgets import (qApp, QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QTextEdit, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QCheckBox, QDialog, QAbstractItemView, QRadioButton, QLineEdit)
-from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket, QNetworkInterface, QNetworkAddressEntry)
-from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice, QAbstractItemModel, QModelIndex, QXmlStreamWriter, QXmlStreamReader, QFile, QRegExp)
-from PyQt5.QtGui import (QIcon, QRegExpValidator)
-from os import (system, path, walk)
+from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QCheckBox, QDialog, QAbstractItemView, QRadioButton)
+from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket, QNetworkInterface)
+from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice, QXmlStreamWriter, QXmlStreamReader, QFile)
+from PyQt5.QtGui import (QIcon)
+from os import (system, path)
 import logging as log
 from lang_dict import (russian, english, ukrainian)
 
-"""
-USB_SPY - Server
-Application receive information from USB_SPY - client about plugged in/out USB flash drives
-"""
+#############################################################################################
+# USB_SPY - Server
+# Application receive information from USB_SPY - client about plugged in/out USB flash drives
+#############################################################################################
 
 __author__ = 'Ruslan Messian Ovcharenko'
-__version__ = '1.2'
+__email__ = 'TheSuperRuslan@gmail.com'
+__version__ = '1.2.1'
 
 class Window(QWidget):
 	def __init__(self):
@@ -28,7 +30,7 @@ class Window(QWidget):
 			self.createActions()
 			self.createTrayIcon()
 			self.sessionBroadcast()
-			self.sessionOpened() # TODO: IPv6
+			self.sessionOpened()
 			self.updateLanguage()
 			self.onSave()
 		except:
@@ -261,8 +263,25 @@ class Window(QWidget):
 			ntState = 1
 		else: ntState = 0
 
-		with open('config.xml', 'w') as replace_config:
-			replace_config.write(text.replace('LANG="{0}" IPADDRESS="{1}" PORT="{2}" DURATION="{3}" NTSTATE="{4}"'.format(self.confLANG, self.confIP, self.PORT, self.duration, self.ntState), 'LANG="{0}" IPADDRESS="{1}" PORT="{2}" DURATION="{3}" NTSTATE="{4}"'.format(self.currentLanguage, self.ipAddress, self.newPORT, self.durationSpinBox.text().replace(self.language['DurationSuffix'], ''), ntState)))
+		if self.currentLanguage != self.confLANG:
+			text = text.replace('LANG="{0}"'.format(self.confLANG), 'LANG="{0}"'.format(self.currentLanguage))
+			with open('config.xml', 'w') as replace_config:
+				replace_config.write(text)
+
+		if self.durationSpinBox.text().replace(self.language['DurationSuffix'], '') != str(self.duration):
+			text = text.replace('DURATION="{0}"'.format(self.duration), 'DURATION="{0}"'.format(self.durationSpinBox.text().replace(self.language['DurationSuffix'], '')))
+			with open('config.xml', 'w') as replace_config:
+   		 		replace_config.write(text)
+
+		if self.ntState != self.disableNotifi.isChecked():
+			text = text.replace('NTSTATE="{0}"'.format(self.ntState), 'NTSTATE="{0}"'.format(ntState))
+			with open('config.xml', 'w') as replace_config:
+				replace_config.write(text)
+
+		if self.confIP != self.ipAddress:
+			text = text.replace('IPADDRESS="{0}"'.format(self.confIP), 'IPADDRESS="{0}"'.format(self.ipAddress))
+			with open('config.xml', 'w') as replace_config:
+				replace_config.write(text)
 
 		self.duration = self.durationSpinBox.text().replace(self.language['DurationSuffix'], '')
 		self.confIP = self.ipAddress
@@ -334,7 +353,6 @@ class Window(QWidget):
 
 		self.closeButton = QPushButton(self.language['Close'])
 		self.closeButton.clicked.connect(self.closeEvent)
-
 		self.saveButton = QPushButton(self.language['Save'])
 		self.saveButton.setEnabled(False)
 		self.saveButton.clicked.connect(self.onSave)
@@ -432,6 +450,6 @@ if __name__ == '__main__':
 	app = QApplication(sys.argv)
 	QApplication.setQuitOnLastWindowClosed(False)
 	log.basicConfig(filename='usbspy.log', level=log.DEBUG, format='%(asctime)s | %(levelname)s | %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
-	window = Window()
-	window.show()
+	MW = Window()
+	MW.show()
 	sys.exit(app.exec_())
