@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# coding=utf-8
+# -*- coding: utf-8 -*-
 
 from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QMenu, QPushButton, QSpinBox, QSystemTrayIcon, QVBoxLayout, QTableWidget, QTableWidgetItem, QComboBox, QCheckBox, QDialog, QAbstractItemView, QRadioButton)
 from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket, QNetworkInterface)
@@ -251,9 +251,13 @@ class Window(QWidget):
 
 	def activeSave(self): # enable save button only when spinbox and language was changed
 		self.saveButton.setEnabled(True)
+		self.closeButton.setDefault(False)
+		self.saveButton.setDefault(True)
 
 		if (self.durationSpinBox.text().replace(self.language['DurationSuffix'], '') == str(self.duration)) and (self.currentLanguage == self.confLANG) and self.ntState == self.disableNotifi.isChecked():
+			self.saveButton.setDefault(False)
 			self.saveButton.setEnabled(False)
+			self.closeButton.setDefault(True)
 
 	def onSave(self): # save new parameters to configuration file
 		with open('config.xml', 'r') as read_config:
@@ -287,7 +291,8 @@ class Window(QWidget):
 		self.confIP = self.ipAddress
 		self.confLANG = self.currentLanguage
 		self.ntState = self.disableNotifi.isChecked()
-
+		self.saveButton.setEnabled(False)
+		self.closeButton.setDefault(True)
 		self.saveButton.setEnabled(False)
 		log.info('Configuration was changed')
 
@@ -353,6 +358,7 @@ class Window(QWidget):
 
 		self.closeButton = QPushButton(self.language['Close'])
 		self.closeButton.clicked.connect(self.closeEvent)
+		self.closeButton.setDefault(True)
 		self.saveButton = QPushButton(self.language['Save'])
 		self.saveButton.setEnabled(False)
 		self.saveButton.clicked.connect(self.onSave)
