@@ -1,12 +1,13 @@
 import win32com.client
 import time
 import socket
-import PyQt5.QtNetwork
-"""
-Client for USB_SPY
-PORT_UDP for echo client send self ip address to USB_SPY and
-PORT_TCP_SERVER for connected SERVER USB_SPY received IP_ADDRESS_SERVER_USB and PORT_SERVER_USB
-"""
+
+#################################################################################################
+#Client for USB_SPY                                                                             #
+#PORT_UDP for echo client send self ip address to USB_SPY and                                   #
+#PORT_TCP_SERVER for connected SERVER USB_SPY received IP_ADDRESS_SERVER_USB and PORT_SERVER_USB#
+#################################################################################################
+
 PORT_UDP=4545
 PORT_TCP_SERVER=5000
 IP_ADDRESS_SERVER_USB=None
