@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QWidget, QAction, QApplication, QGridLayout, QGroup
 from PyQt5.QtNetwork import (QTcpServer, QTcpSocket, QHostAddress, QUdpSocket)
 from PyQt5.QtCore import (QObject, QByteArray, QDataStream, QIODevice, QXmlStreamWriter, QXmlStreamReader, QFile)
 from PyQt5.QtGui import (QIcon)
-from os import (system, path)
+from os import (path, remove)
 import logging as log
 from lang_dict import (russian, english, ukrainian)
 
@@ -17,6 +17,7 @@ from lang_dict import (russian, english, ukrainian)
 __author__ = 'Ruslan Messian Ovcharenko'
 __email__ = 'TheSuperRuslan@gmail.com'
 __version__ = '1.2.1'
+
 
 class Window(QWidget):
 	def __init__(self):
@@ -33,11 +34,9 @@ class Window(QWidget):
 			self.sessionOpened()
 			self.updateLanguage()
 			self.onSave()
-		except:
+		except Exception:
 			log.warning('Can\'t load configuration from "config.xml"')
-			rmConf = system('del config.xml')
-			if rmConf == 1:
-				system('rm config.xml')
+			remove('config.xml')
 			QMessageBox.critical(self, self.language['errAtStartName'], self.language['ErrAtStart'], QMessageBox.Ok)
 			self.quitLog()
 			sys.exit(app.exec_())
@@ -76,7 +75,7 @@ class Window(QWidget):
 			xmlWriter.writeEndDocument()
 			self.xmlConfig.close()
 
-		self.language = english #default language if can't load from file
+		self.language = english  # default language if can't load from file
 		self.xmlConfig.open(QIODevice.ReadOnly)
 		xmlReader = QXmlStreamReader(self.xmlConfig)
 		while not xmlReader.atEnd():
@@ -122,13 +121,13 @@ class Window(QWidget):
 				self.ntState = int(xmlReader.attributes().value("NTSTATE"))
 		self.xmlConfig.close()
 
-	def sessionOpened(self): # opening ports for TCP session
+	def sessionOpened(self):  # opening ports for TCP session
 		self.statusGroupBox = QGroupBox(self.language['StatusGroup'])
 
 		self.server = QTcpServer()
 		self.tcpSocket = QTcpSocket()
 		self.server.newConnection.connect(self.acceptConnection)
-		self.server.listen(QHostAddress(self.ipAddress), self.PORT) # listen TCP port
+		self.server.listen(QHostAddress(self.ipAddress), self.PORT)  # listen TCP port
 
 		self.statusLabel = QLabel(self.language['StatusLabel'].format(self.ipAddress, self.PORT))
 		log.info('Server started on IP:{0} port:{1}'.format(self.ipAddress, self.PORT))
@@ -137,44 +136,39 @@ class Window(QWidget):
 		statusLayout.addWidget(self.statusLabel)
 		self.statusGroupBox.setLayout(statusLayout)
 
-	def acceptConnection(self): # if new connection
+	def acceptConnection(self):  # if new connection
 		client = self.server.nextPendingConnection()
 		client.readyRead.connect(self.startRead)
 
-	def startRead(self): # get information from client
+	def startRead(self):  # get information from client
 		client = QObject.sender(self)
 		message = client.read(client.bytesAvailable())
 		try:
 			message = message.decode("utf-8").split('||')
 			if message[0] == 'connect':
-				log.warning('%s (%s) plugged in %s with S/N: %s'%(message[1], message[2], message[3], message[4]))
+				log.warning('%s (%s) plugged in %s with S/N: %s' % (message[1], message[2], message[3], message[4]))
 				status = 'in'
 				self.usersList[message[1]] = message[2]
 				self.updateTable()
 			elif message[0] == 'disconnect':
-				log.info('%s (%s) plugged out %s with S/N: %s'%(message[1], message[2], message[3], message[4]))
+				log.info('%s (%s) plugged out %s with S/N: %s' % (message[1], message[2], message[3], message[4]))
 				status = 'out'
 				self.usersList.pop(message[1])
 				self.updateTable()
 			elif message[0] == 'data':
 				self.usersData(message[1])
-			if self.ntState == False:
+			if self.ntState is False:
 				self.showMessage(message, status)
-		except UnicodeDecodeError as error:
+		except Exception as error:
 			log.warning(error)
 			return
-		except IndexError as error:
-			log.warning(error)
-			return
-		except KeyError as error:
-			log.warning(error)
 
-	def sessionBroadcast(self): # listening UDP port for broadcasting message from client
+	def sessionBroadcast(self):  # listening UDP port for broadcasting message from client
 		self.udpSocket = QUdpSocket()
 		self.udpSocket.bind(4545)
 		self.udpSocket.readyRead.connect(self.readBroadcast)
 
-	def readBroadcast(self): # read broadcast message from client
+	def readBroadcast(self):  # read broadcast message from client
 		while self.udpSocket.hasPendingDatagrams():
 			self.datagram, host, port = self.udpSocket.readDatagram(self.udpSocket.pendingDatagramSize())
 			self.datagram = str(self.datagram, encoding='ascii')
@@ -182,7 +176,7 @@ class Window(QWidget):
 			if self.datagram[0] == 'give_ip':
 				self.sendBroadcast(self.datagram[1])
 
-	def sendBroadcast(self, ipadd): # answer to client. Send self Port
+	def sendBroadcast(self, ipadd):  # answer to client. Send self Port
 		self.tcpSocket.abort()
 		self.tcpSocket.connectToHost(ipadd, 5000)
 		self.tcpSocket.waitForConnected(2000)
@@ -208,13 +202,13 @@ class Window(QWidget):
 			QMessageBox.information(self, "Systray", self.language['TrayClose'])
 			self.hide()
 
-	def showMessage(self, msg, stat): # message about plugged in/out USB flash drives
+	def showMessage(self, msg, stat):  # message about plugged in/out USB flash drives
 		if stat == 'in':
 			self.trayIcon.showMessage(self.language['ClientName'].format(msg[0], msg[1]), self.language['ClientMessageIN'].format(msg[3], msg[4]), self.trayIcon.Information, self.durationSpinBox.value() * 1000)
 		else:
 			self.trayIcon.showMessage(self.language['ClientName'].format(msg[0], msg[1]), self.language['ClientMessageOUT'].format(msg[3], msg[4]), self.trayIcon.Information, self.durationSpinBox.value() * 1000)
 
-	def updateLanguage(self): #set current language
+	def updateLanguage(self):  # set current language
 		if self.languageList.currentText() == 'English':
 			self.currentLanguage = 'english'
 			self.language = english
@@ -227,7 +221,7 @@ class Window(QWidget):
 		self.updateLanguageText()
 		self.activeSave()
 
-	def updateLanguageText(self): # update all buttons and labels to another language
+	def updateLanguageText(self):  # update all buttons and labels to another language
 		self.setWindowTitle(self.language['WindowTitle'])
 
 		self.closeButton.setText(self.language['Close'])
@@ -250,7 +244,7 @@ class Window(QWidget):
 		self.restoreAction.setText(self.language['Restore'])
 		self.quitAction.setText(self.language['Quit'])
 
-	def activeSave(self): # enable save button only when spinbox and language was changed
+	def activeSave(self):  # enable save button only when spinbox and language was changed
 		self.saveButton.setEnabled(True)
 		self.closeButton.setDefault(False)
 		self.saveButton.setDefault(True)
@@ -260,13 +254,14 @@ class Window(QWidget):
 			self.saveButton.setEnabled(False)
 			self.closeButton.setDefault(True)
 
-	def onSave(self): # save new parameters to configuration file
+	def onSave(self):  # save new parameters to configuration file
 		with open('config.xml', 'r') as read_config:
 			text = read_config.read()
 
-		if self.disableNotifi.isChecked() == True:
+		if self.disableNotifi.isChecked() is True:
 			ntState = 1
-		else: ntState = 0
+		else:
+			ntState = 0
 
 		if self.currentLanguage != self.confLANG:
 			text = text.replace('LANG="{0}"'.format(self.confLANG), 'LANG="{0}"'.format(self.currentLanguage))
@@ -276,7 +271,7 @@ class Window(QWidget):
 		if self.durationSpinBox.text().replace(self.language['DurationSuffix'], '') != str(self.duration):
 			text = text.replace('DURATION="{0}"'.format(self.duration), 'DURATION="{0}"'.format(self.durationSpinBox.text().replace(self.language['DurationSuffix'], '')))
 			with open('config.xml', 'w') as replace_config:
-   		 		replace_config.write(text)
+				replace_config.write(text)
 
 		if self.ntState != self.disableNotifi.isChecked():
 			text = text.replace('NTSTATE="{0}"'.format(self.ntState), 'NTSTATE="{0}"'.format(ntState))
@@ -297,23 +292,23 @@ class Window(QWidget):
 		self.saveButton.setEnabled(False)
 		log.info('Configuration was changed')
 
-	def ColRow(self, row=0,column=0): # second loop for creating table
+	def ColRow(self, row=0, column=0):  # second loop for creating table
 		while True:
 			yield row, column
 			if column == 0:
 				column += 1
 			else:
 				column = 0
-				row = row+1
+				row = row + 1
 
-	def updateTable(self): # update information in table
+	def updateTable(self):  # update information in table
 		self.usersTable.setRowCount(len(self.usersList))
-		gen=self.ColRow()
+		gen = self.ColRow()
 		for key, value in self.usersList.items():
 			self.usersTable.setItem(*next(gen), QTableWidgetItem(key))
 			self.usersTable.setItem(*next(gen), QTableWidgetItem(value))
 
-	def createSettingsGroupBox(self): # creation Settings Group Box
+	def createSettingsGroupBox(self):  # creation Settings Group Box
 		self.SettingsGroupBox = QGroupBox(self.language['SettingsGroup'])
 
 		self.durationLabel = QLabel(self.language['Duration'])
@@ -353,7 +348,7 @@ class Window(QWidget):
 
 		self.SettingsGroupBox.setLayout(self.settingsLayout)
 
-	def createUsersGroupBox(self): # creation Users Group Box
+	def createUsersGroupBox(self):  # creation Users Group Box
 		self.UsersGroupBox = QGroupBox(self.language['UserGroup'])
 		self.UsersGroupBox.setToolTip(self.language['UserToolTip'])
 
@@ -381,27 +376,25 @@ class Window(QWidget):
 		UsersVLayout.addLayout(UsersHLayout)
 		self.UsersGroupBox.setLayout(UsersVLayout)
 
-	def createActions(self): # actions in tray menu
+	def createActions(self):  # actions in tray menu
 		self.minimizeAction = QAction(self.language['Minimize'], self, triggered=self.hide)
-		self.restoreAction = QAction(self.language['Restore'], self,
-				triggered=self.showNormal)
-		self.quitAction = QAction(self.language['Quit'], self,
-				triggered=QApplication.instance().quit)
+		self.restoreAction = QAction(self.language['Restore'], self, triggered=self.showNormal)
+		self.quitAction = QAction(self.language['Quit'], self, triggered=QApplication.instance().quit)
 		self.quitAction.triggered.connect(self.quitLog)
 
 	def quitLog(self):
 		log.info('Application was closed')
 
-	def createTrayIcon(self): # creation tray menu
-		 self.trayIconMenu = QMenu(self)
-		 self.trayIconMenu.addAction(self.minimizeAction)
-		 self.trayIconMenu.addAction(self.restoreAction)
-		 self.trayIconMenu.addSeparator()
-		 self.trayIconMenu.addAction(self.quitAction)
+	def createTrayIcon(self):  # creation tray menu
+		self.trayIconMenu = QMenu(self)
+		self.trayIconMenu.addAction(self.minimizeAction)
+		self.trayIconMenu.addAction(self.restoreAction)
+		self.trayIconMenu.addSeparator()
+		self.trayIconMenu.addAction(self.quitAction)
 
-		 self.trayIcon = QSystemTrayIcon(self)
-		 self.trayIcon.setContextMenu(self.trayIconMenu)
-		 self.trayIcon.setIcon(QIcon('icon.ico'))
+		self.trayIcon = QSystemTrayIcon(self)
+		self.trayIcon.setContextMenu(self.trayIconMenu)
+		self.trayIcon.setIcon(QIcon('icon.ico'))
 
 if __name__ == '__main__':
 	import sys
