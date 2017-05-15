@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (QHBoxLayout, QMessageBox, QPushButton, QVBoxLayout,
 from PyQt5.QtGui import (QIcon)
 from PyQt5.QtNetwork import QNetworkInterface
 
+
 class Interfaces(QDialog):
 	def __init__(self, lang):
 		super(Interfaces, self).__init__()
@@ -27,7 +28,7 @@ class Interfaces(QDialog):
 
 		for interfaces in QNetworkInterface().allInterfaces():
 			for ipadd in interfaces.interfaceFromName(interfaces.name()).addressEntries():
-				c = QRadioButton(self.language['InterfacesList'].format(interfaces.humanReadableName(), ipadd.ip().toString(), 	interfaces.hardwareAddress()))
+				c = QRadioButton(self.language['InterfacesList'].format(interfaces.humanReadableName(), ipadd.ip().toString(), interfaces.hardwareAddress()))
 				Vlayout.addWidget(c)
 				self.checks.append(c)
 
@@ -42,7 +43,6 @@ class Interfaces(QDialog):
 				global IPADD
 				IPADD = ipadd[1][1:]
 				self.close()
-
 
 		if self.check == 0:
 			QMessageBox.information(self, self.language['SecondTitle'], self.language['warnInts'])
