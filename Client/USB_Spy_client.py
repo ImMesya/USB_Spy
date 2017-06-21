@@ -50,7 +50,7 @@ def server_ip():  # send my ip to server and receive server's ip and port
 def update_ip():  # echo broadcast and waiting connection to server
     while True:
         with create_broadcast() as flood:
-            flood.sendto("give_ip {}".format(socket.gethostbyname(socket.gethostname())).encode('utf-8'), ('192.168.3.255', PORT_UDP))
+            flood.sendto("give_ip {}".format(socket.gethostbyname(socket.gethostname())).encode('utf-8'), ('255.255.255.255', PORT_UDP))
             ip_, port_ = server_ip()
             if ip_ is not None:
                 return ip_, port_
@@ -93,7 +93,7 @@ def client(message):  # send message to server
     s = socket.socket()
     name = socket.gethostname()
     s.connect((IP_ADDRESS_SERVER_USB, int(PORT_SERVER_USB)))
-    message = ("{}||{}||{}||{}||{}||".format(message[1], name, s.getsockname()[0], (message[0][1][1] + " (" + message[0][1][0] + ")"), message[0][0]))
+    message = ("{}|{}|{}|{}|{}".format(message[1], name, s.getsockname()[0], (message[0][1][1] + " (" + message[0][1][0] + ")"), message[0][0]))
     s.sendall(message.encode("utf-8"))
     s.close()
 
