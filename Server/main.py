@@ -11,7 +11,7 @@ from lang_dict import (russian, english, ukrainian)
 
 #############################################################################################
 # USB_SPY - Server
-# Application receive information from USB_SPY - client about plugged in/out USB flash drives
+# Application receive information from USB_SPY - client ab out plugged in/out USB flash drives
 #############################################################################################
 
 __author__ = 'Ruslan Messian Ovcharenko'
@@ -144,7 +144,7 @@ class Window(QWidget):
 		client = QObject.sender(self)
 		message = client.read(client.bytesAvailable())
 		try:
-			message = message.decode("utf-8").split('||')
+			message = message.decode("utf-8").split('|')
 			if message[0] == 'connect':
 				log.warning('%s (%s) plugged in %s with S/N: %s' % (message[1], message[2], message[3], message[4]))
 				status = 'in'
@@ -395,6 +395,7 @@ class Window(QWidget):
 		self.trayIcon = QSystemTrayIcon(self)
 		self.trayIcon.setContextMenu(self.trayIconMenu)
 		self.trayIcon.setIcon(QIcon('icon.ico'))
+
 
 if __name__ == '__main__':
 	import sys
