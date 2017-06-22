@@ -26,7 +26,9 @@ russian = {
     'warnInts': 'Ни один интерфейс не выбран.',
     'cancelInts': 'Выберите интерфейс и нажмите "OK", чтобы продолжить.',
     'msgBoxPortTitle': 'Недопустимый порт',
-    'msgBoxPortText': 'Введите порт от 0 до 65535:'}
+    'msgBoxPortText': 'Введите порт от 0 до 65535:',
+    'HostName': 'Имя хоста',
+    'IPadd': 'IP-адрес'}
 
 english = {
     'WindowTitle': 'USB Spy - Server',
@@ -56,7 +58,9 @@ english = {
     'warnInts': 'No interface is selected.',
     'cancelInts': 'Select the interface and click "OK" to continue.',
     'msgBoxPortTitle': 'Unacceptable port',
-    'msgBoxPortText': 'Enter port from 0 to 65535:'}
+    'msgBoxPortText': 'Enter port from 0 to 65535:',
+    'HostName': 'Hostname',
+    'IPadd': 'IP Address'}
 
 ukrainian = {
     'WindowTitle': 'USB Шпигун - Сервер',
@@ -86,4 +90,6 @@ ukrainian = {
     'warnInts': 'Жоден інтерфейс не обраний.',
     'cancelInts': 'Виберіть інтерфейс і натисніть "OK", щоб продовжити.',
     'msgBoxPortTitle': 'Неприпустимий порт',
-    'msgBoxPortText': 'Введiть порт з 0 до 65535:'}
+    'msgBoxPortText': 'Введiть порт з 0 до 65535:',
+    'HostName': 'Ім\'я хоста',
+    'IPadd': 'IP-адреса'}
