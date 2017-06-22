@@ -199,7 +199,7 @@ class Window(QWidget):
 
 	def closeEvent(self, event):
 		if self.trayIcon.isVisible():
-			QMessageBox.information(self, "Systray", self.language['TrayClose'].format(self.language['Quit']))
+			QMessageBox.information(self, self.language['Systray'], self.language['TrayClose'].format(self.language['Quit']))
 			self.hide()
 
 	def showMessage(self, msg, stat):  # message about plugged in/out USB flash drives
