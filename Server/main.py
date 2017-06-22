@@ -11,7 +11,7 @@ from lang_dict import (russian, english, ukrainian)
 
 #############################################################################################
 # USB_SPY - Server
-# Application receive information from USB_SPY - client ab out plugged in/out USB flash drives
+# Application receive information from USB_SPY - client about plugged in/out USB flash drives
 #############################################################################################
 
 __author__ = 'Ruslan Messian Ovcharenko'
@@ -184,7 +184,7 @@ class Window(QWidget):
 		request = QByteArray()
 		stream = QDataStream(request, QIODevice.WriteOnly)
 		stream.writeUInt32(0)
-		stream.writeRawData(b'show %i' % self.PORT)
+		stream.writeRawData(b'show %d' % self.PORT)
 		stream.device().seek(0)
 		stream.writeUInt32(request.size())
 
@@ -199,7 +199,7 @@ class Window(QWidget):
 
 	def closeEvent(self, event):
 		if self.trayIcon.isVisible():
-			QMessageBox.information(self, "Systray", self.language['TrayClose'])
+			QMessageBox.information(self, "Systray", self.language['TrayClose'].format(self.language['Quit']))
 			self.hide()
 
 	def showMessage(self, msg, stat):  # message about plugged in/out USB flash drives
