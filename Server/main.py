@@ -16,7 +16,7 @@ from lang_dict import (russian, english, ukrainian)
 
 __author__ = 'Ruslan Messian Ovcharenko'
 __email__ = 'TheSuperRuslan@gmail.com'
-__version__ = '1.2.1'
+__version__ = '1.3'
 
 
 class Window(QWidget):
@@ -83,11 +83,11 @@ class Window(QWidget):
 			if xmlReader.isStartElement():
 				self.LANG = xmlReader.attributes().value("LANG")
 				if self.LANG == 'russian':
-						self.confLANG = 'russian'
-						self.language = russian
+					self.confLANG = 'russian'
+					self.language = russian
 				elif self.LANG == 'english':
-						self.language = english
-						self.confLANG = 'english'
+					self.language = english
+					self.confLANG = 'english'
 				elif self.LANG == 'ukrainian':
 					self.language = ukrainian
 					self.confLANG = 'ukrainian'
@@ -103,7 +103,7 @@ class Window(QWidget):
 				self.PORT = int(xmlReader.attributes().value("PORT"))
 				self.newPORT = self.PORT
 				if self.PORT < 0 or self.PORT > 65535:
-					log.warning('unacceptable port: %i' % self.PORT)
+					log.warning('unacceptable port: {0}'.format(self.PORT))
 
 					portSpin = QSpinBox()
 					portSpin.setFixedSize(70, 25)
@@ -146,12 +146,12 @@ class Window(QWidget):
 		try:
 			message = message.decode("utf-8").split('|')
 			if message[0] == 'connect':
-				log.warning('%s (%s) plugged in %s with S/N: %s' % (message[1], message[2], message[3], message[4]))
+				log.warning('{0} ({1}) plugged in {2} with S/N: {3}'.format(message[1], message[2], message[3], message[4]))
 				status = 'in'
 				self.usersList[message[1]] = message[2]
 				self.updateTable()
 			elif message[0] == 'disconnect':
-				log.info('%s (%s) plugged out %s with S/N: %s' % (message[1], message[2], message[3], message[4]))
+				log.info('{0} ({1}) plugged out {2} with S/N: {3}'.format(message[1], message[2], message[3], message[4]))
 				status = 'out'
 				self.usersList.pop(message[1])
 				self.updateTable()
@@ -184,7 +184,7 @@ class Window(QWidget):
 		request = QByteArray()
 		stream = QDataStream(request, QIODevice.WriteOnly)
 		stream.writeUInt32(0)
-		stream.writeRawData(b'show %d' % self.PORT)
+		stream.writeRawData(b'show %i' % self.PORT)
 		stream.device().seek(0)
 		stream.writeUInt32(request.size())
 
@@ -244,6 +244,8 @@ class Window(QWidget):
 		self.restoreAction.setText(self.language['Restore'])
 		self.quitAction.setText(self.language['Quit'])
 
+		self.usersTable.setHorizontalHeaderLabels([self.language['HostName'], self.language['IPadd']])
+
 	def activeSave(self):  # enable save button only when spinbox and language was changed
 		self.saveButton.setEnabled(True)
 		self.closeButton.setDefault(False)
@@ -287,7 +289,6 @@ class Window(QWidget):
 		self.confIP = self.ipAddress
 		self.confLANG = self.currentLanguage
 		self.ntState = self.disableNotifi.isChecked()
-		self.saveButton.setEnabled(False)
 		self.closeButton.setDefault(True)
 		self.saveButton.setEnabled(False)
 		log.info('Configuration was changed')
@@ -362,7 +363,7 @@ class Window(QWidget):
 		self.usersList = {}
 		self.usersTable = QTableWidget()
 		self.usersTable.setColumnCount(2)
-		self.usersTable.setHorizontalHeaderLabels(['Host name', 'IP Address'])
+		self.usersTable.setHorizontalHeaderLabels([self.language['HostName'], self.language['IPadd']])
 		self.usersTable.setColumnWidth(0, 170)
 		self.usersTable.setColumnWidth(1, 170)
 		self.usersTable.setSortingEnabled(True)
