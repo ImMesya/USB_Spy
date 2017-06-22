@@ -28,7 +28,8 @@ russian = {
     'msgBoxPortTitle': 'Недопустимый порт',
     'msgBoxPortText': 'Введите порт от 0 до 65535:',
     'HostName': 'Имя хоста',
-    'IPadd': 'IP-адрес'}
+    'IPadd': 'IP-адрес',
+    'Systray': 'Программа продолжит работать в системном трее'}
 
 english = {
     'WindowTitle': 'USB Spy - Server',
@@ -60,7 +61,8 @@ english = {
     'msgBoxPortTitle': 'Unacceptable port',
     'msgBoxPortText': 'Enter port from 0 to 65535:',
     'HostName': 'Hostname',
-    'IPadd': 'IP Address'}
+    'IPadd': 'IP Address',
+    'Systray': 'The program will keep running in the system tray'}
 
 ukrainian = {
     'WindowTitle': 'USB Шпигун - Сервер',
@@ -92,4 +94,5 @@ ukrainian = {
     'msgBoxPortTitle': 'Неприпустимий порт',
     'msgBoxPortText': 'Введiть порт з 0 до 65535:',
     'HostName': 'Ім\'я хоста',
-    'IPadd': 'IP-адреса'}
+    'IPadd': 'IP-адреса',
+    'Systray': 'Програма продовжить працювати в системному треї'}
